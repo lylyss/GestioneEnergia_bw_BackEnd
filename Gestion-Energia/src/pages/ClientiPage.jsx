@@ -26,6 +26,9 @@ function ClientiPage() {
     logoAziendale: "",
   });
   const [indiceModifica, setIndiceModifica] = useState(null);
+  const [filtro, setFiltro] = useState("");
+  const [colonnaOrdinamento, setColonnaOrdinamento] = useState(null);
+  const [direzioneOrdinamento, setDirezioneOrdinamento] = useState("asc");
 
   const gestisciCambio = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -91,6 +94,41 @@ function ClientiPage() {
   useEffect(() => {
     localStorage.setItem("clienti", JSON.stringify(clienti));
   }, [clienti]);
+
+  // Filtra i clienti in base al testo inserito (ragione sociale o partita IVA)
+  const clientiFiltrati = clienti.filter(
+    (cliente) => cliente.ragioneSociale.toLowerCase().includes(filtro.toLowerCase()) || cliente.partitaIva.toLowerCase().includes(filtro.toLowerCase())
+  );
+
+  // Funzione per ordinare i clienti
+  const ordinaClienti = (colonna) => {
+    if (colonnaOrdinamento === colonna) {
+      setDirezioneOrdinamento(direzioneOrdinamento === "asc" ? "desc" : "asc");
+    } else {
+      setColonnaOrdinamento(colonna);
+      setDirezioneOrdinamento("asc");
+    }
+  };
+
+  // Applica ordinamento ai clienti filtrati
+  const clientiOrdinati = [...clientiFiltrati].sort((a, b) => {
+    if (!colonnaOrdinamento) return 0;
+    let valoreA = a[colonnaOrdinamento];
+    let valoreB = b[colonnaOrdinamento];
+    if (colonnaOrdinamento === "fatturatoAnnuale") {
+      valoreA = parseFloat(valoreA) || 0;
+      valoreB = parseFloat(valoreB) || 0;
+    } else if (colonnaOrdinamento === "dataInserimento" || colonnaOrdinamento === "dataUltimoContatto") {
+      valoreA = valoreA || "";
+      valoreB = valoreB || "";
+    } else {
+      valoreA = valoreA ? valoreA.toLowerCase() : "";
+      valoreB = valoreB ? valoreB.toLowerCase() : "";
+    }
+    if (valoreA < valoreB) return direzioneOrdinamento === "asc" ? -1 : 1;
+    if (valoreA > valoreB) return direzioneOrdinamento === "asc" ? 1 : -1;
+    return 0;
+  });
 
   return (
     <Container className="py-4">
@@ -176,25 +214,36 @@ function ClientiPage() {
         )}
       </Form>
       <h4>Elenco Clienti</h4>
+      <Form.Group className="mb-3">
+        <Form.Control type="text" placeholder="Cerca per Ragione Sociale o Partita IVA" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
+      </Form.Group>
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>Ragione Sociale</th>
-            <th>Partita IVA</th>
-            <th>Email</th>
-            <th>Fatturato</th>
+            <th style={{ cursor: "pointer" }} onClick={() => ordinaClienti("ragioneSociale")}>
+              Ragione Sociale
+            </th>
+            <th style={{ cursor: "pointer" }} onClick={() => ordinaClienti("partitaIva")}>
+              Partita IVA
+            </th>
+            <th style={{ cursor: "pointer" }} onClick={() => ordinaClienti("email")}>
+              Email
+            </th>
+            <th style={{ cursor: "pointer" }} onClick={() => ordinaClienti("fatturatoAnnuale")}>
+              Fatturato
+            </th>
             <th>Azioni</th>
           </tr>
         </thead>
         <tbody>
-          {clienti.length === 0 ? (
+          {clientiOrdinati.length === 0 ? (
             <tr>
               <td colSpan="5" className="text-center">
-                Nessun cliente inserito
+                Nessun cliente trovato
               </td>
             </tr>
           ) : (
-            clienti.map((cliente, indiceCliente) => (
+            clientiOrdinati.map((cliente, indiceCliente) => (
               <tr key={indiceCliente}>
                 <td>{cliente.ragioneSociale}</td>
                 <td>{cliente.partitaIva}</td>
