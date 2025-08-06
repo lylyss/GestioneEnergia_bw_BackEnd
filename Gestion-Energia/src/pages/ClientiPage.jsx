@@ -3,6 +3,7 @@ import Container from "react-bootstrap/Container";
 import Table from "react-bootstrap/Table";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
+import Modal from "react-bootstrap/Modal";
 
 function ClientiPage() {
   // Carica i clienti dal localStorage all'avvio
@@ -29,6 +30,8 @@ function ClientiPage() {
   const [filtro, setFiltro] = useState("");
   const [colonnaOrdinamento, setColonnaOrdinamento] = useState(null);
   const [direzioneOrdinamento, setDirezioneOrdinamento] = useState("asc");
+  const [mostraDettagli, setMostraDettagli] = useState(false);
+  const [clienteSelezionato, setClienteSelezionato] = useState(null);
 
   const gestisciCambio = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -129,6 +132,15 @@ function ClientiPage() {
     if (valoreA > valoreB) return direzioneOrdinamento === "asc" ? 1 : -1;
     return 0;
   });
+
+  const apriDettagli = (cliente) => {
+    setClienteSelezionato(cliente);
+    setMostraDettagli(true);
+  };
+  const chiudiDettagli = () => {
+    setMostraDettagli(false);
+    setClienteSelezionato(null);
+  };
 
   return (
     <Container className="py-4">
@@ -250,6 +262,9 @@ function ClientiPage() {
                 <td>{cliente.email}</td>
                 <td>{cliente.fatturatoAnnuale}</td>
                 <td>
+                  <Button variant="info" size="sm" className="me-2" onClick={() => apriDettagli(cliente)}>
+                    Dettagli
+                  </Button>
                   <Button variant="warning" size="sm" className="me-2" onClick={() => modificaCliente(indiceCliente)}>
                     Modifica
                   </Button>
@@ -262,6 +277,64 @@ function ClientiPage() {
           )}
         </tbody>
       </Table>
+
+      {/* Modale Dettagli Cliente */}
+      <Modal show={mostraDettagli} onHide={chiudiDettagli}>
+        <Modal.Header closeButton>
+          <Modal.Title>Dettagli Cliente</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {clienteSelezionato && (
+            <div>
+              <p>
+                <strong>Ragione Sociale:</strong> {clienteSelezionato.ragioneSociale}
+              </p>
+              <p>
+                <strong>Partita IVA:</strong> {clienteSelezionato.partitaIva}
+              </p>
+              <p>
+                <strong>Email:</strong> {clienteSelezionato.email}
+              </p>
+              <p>
+                <strong>Data Inserimento:</strong> {clienteSelezionato.dataInserimento}
+              </p>
+              <p>
+                <strong>Data Ultimo Contatto:</strong> {clienteSelezionato.dataUltimoContatto}
+              </p>
+              <p>
+                <strong>Fatturato Annuale:</strong> {clienteSelezionato.fatturatoAnnuale}
+              </p>
+              <p>
+                <strong>PEC:</strong> {clienteSelezionato.pec}
+              </p>
+              <p>
+                <strong>Telefono:</strong> {clienteSelezionato.telefono}
+              </p>
+              <p>
+                <strong>Email Contatto:</strong> {clienteSelezionato.emailContatto}
+              </p>
+              <p>
+                <strong>Nome Contatto:</strong> {clienteSelezionato.nomeContatto}
+              </p>
+              <p>
+                <strong>Cognome Contatto:</strong> {clienteSelezionato.cognomeContatto}
+              </p>
+              <p>
+                <strong>Telefono Contatto:</strong> {clienteSelezionato.telefonoContatto}
+              </p>
+              <p>
+                <strong>Logo Aziendale:</strong>{" "}
+                {clienteSelezionato.logoAziendale ? <img src={clienteSelezionato.logoAziendale} alt="Logo" style={{ maxWidth: "100px" }} /> : "-"}
+              </p>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={chiudiDettagli}>
+            Chiudi
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 }
