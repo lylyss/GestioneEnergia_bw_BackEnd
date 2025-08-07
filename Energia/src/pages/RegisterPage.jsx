@@ -40,7 +40,7 @@ function RegisterPage() {
     <Container className="py-4" style={{ maxWidth: 1000 }}>
       <Row className="align-items-center">
         <Col xs={12}>
-          <img src={imageRegister} alt="EPIC ENERGY SERVICES Logo" style={{ maxWidth: 130, marginBottom: 16 }} />
+          <img src={imageRegister} alt="EPIC ENERGY SERVICES Logo" style={{ maxWidth: 110, marginBottom: 16 }} />
           <h2>Registrazione</h2>
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
