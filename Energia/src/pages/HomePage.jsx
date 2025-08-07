@@ -2,25 +2,51 @@ import Container from "react-bootstrap/Container";
 import imagePage from "../assets/imagePage.svg";
 import { useAuth } from "../AuthContext";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import Card from "react-bootstrap/Card";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import Form from "react-bootstrap/Form";
 
 function HomePage() {
   const { user } = useAuth();
   const [openClienti, setOpenClienti] = useState(false);
+  const [showClientiList, setShowClientiList] = useState(false);
+  const [search, setSearch] = useState("");
+  const [showFattureList, setShowFattureList] = useState(false);
+  const [fattureSearch, setFattureSearch] = useState("");
+  const clienti = JSON.parse(localStorage.getItem("clienti") || "[]");
+  const fatture = JSON.parse(localStorage.getItem("fatture") || "[]");
+  const clientiMenuRef = useRef();
+
+  // Chiudi il menu a discesa quando clicchi fuori
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (clientiMenuRef.current && !clientiMenuRef.current.contains(event.target)) {
+        setOpenClienti(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
       {/* Sidebar */}
       <aside
         style={{
-          width: 100,
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: 120,
+          height: "100vh",
           background: "#fff",
-          borderRight: "1px solid #eee",
-          minHeight: "100vh",
+          borderRight: "2px solid #eee",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           paddingTop: 25,
+          zIndex: 1000,
         }}
       >
         <img src={imagePage} alt="EPIC ENERGY SERVICES Logo" style={{ maxWidth: 60, marginBottom: 20 }} />
@@ -31,7 +57,7 @@ function HomePage() {
                 Profilo
               </Link>
             </li>
-            <li style={{ margin: "16px 0", position: "relative" }}>
+            <li style={{ margin: "16px 0", position: "relative" }} ref={clientiMenuRef}>
               <span style={{ cursor: "pointer", textDecoration: "none", color: "#333", fontWeight: 500 }} onClick={() => setOpenClienti((v) => !v)}>
                 Clienti
               </span>
@@ -46,36 +72,48 @@ function HomePage() {
                     top: 0,
                     background: "#fff",
                     border: "1px solid #eee",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
-                    minWidth: 120,
+                    boxShadow: "0 2px 8px rgba(19, 17, 17, 0.08)",
+                    minWidth: 130,
                     zIndex: 10,
                   }}
                 >
                   <li>
-                    <Link
-                      to="/clienti"
+                    <span
                       style={{
                         display: "block",
                         padding: "8px 16px",
                         color: "#333",
                         textDecoration: "none",
+                        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.25)",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        setShowClientiList(true);
+                        setShowFattureList(false);
+                        setOpenClienti(false);
                       }}
                     >
                       Lista Clienti
-                    </Link>
+                    </span>
                   </li>
                   <li>
-                    <Link
-                      to="/fatture"
+                    <span
                       style={{
                         display: "block",
                         padding: "8px 16px",
                         color: "#333",
                         textDecoration: "none",
+                        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.25)",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        setShowFattureList(true);
+                        setShowClientiList(false);
+                        setOpenClienti(false);
                       }}
                     >
                       Lista Fatture
-                    </Link>
+                    </span>
                   </li>
                 </ul>
               )}
@@ -84,7 +122,7 @@ function HomePage() {
         </nav>
       </aside>
       {/* Main content */}
-      <div style={{ flex: 1 }}>
+      <div style={{ marginLeft: 120 }}>
         <Container className="py-4 d-flex flex-column min-vh-100 justify-content-between">
           {/* Header */}
           <header className="mb-4">
@@ -92,7 +130,108 @@ function HomePage() {
           </header>
           {/* Main */}
           <main className="flex-grow-1">
-            {user && user.role === "ADMIN" ? (
+            {showClientiList ? (
+              <>
+                <Form className="mb-4" style={{ maxWidth: 400 }}>
+                  <Form.Control
+                    type="text"
+                    placeholder="Cerca cliente per nome, partita IVA o email..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </Form>
+                <Row xs={1} md={3} className="g-4">
+                  {/* Mostra i clienti filtrati */}
+                  {clienti.filter(
+                    (c) =>
+                      c.ragioneSociale.toLowerCase().includes(search.toLowerCase()) ||
+                      c.partitaIva.toLowerCase().includes(search.toLowerCase()) ||
+                      c.email.toLowerCase().includes(search.toLowerCase())
+                  ).length === 0 ? (
+                    <Col>
+                      <div className="text-center text-muted">Nessun cliente presente</div>
+                    </Col>
+                  ) : (
+                    clienti
+                      .filter(
+                        (c) =>
+                          c.ragioneSociale.toLowerCase().includes(search.toLowerCase()) ||
+                          c.partitaIva.toLowerCase().includes(search.toLowerCase()) ||
+                          c.email.toLowerCase().includes(search.toLowerCase())
+                      )
+                      .map((cliente, idx) => (
+                        <Col key={idx}>
+                          <Card className="h-100 text-center">
+                            <Card.Img variant="top" src={imagePage} style={{ maxWidth: 60, margin: "0 auto", marginTop: 16 }} />
+                            <Card.Body>
+                              <Card.Title>{cliente.ragioneSociale}</Card.Title>
+                            </Card.Body>
+                          </Card>
+                        </Col>
+                      ))
+                  )}
+                </Row>
+              </>
+            ) : showFattureList ? (
+              <>
+                <Form className="mb-4" style={{ maxWidth: 400 }}>
+                  <Form.Control
+                    type="text"
+                    placeholder="Cerca per ragione sociale o partita IVA..."
+                    value={fattureSearch}
+                    onChange={(e) => setFattureSearch(e.target.value)}
+                  />
+                </Form>
+                <Row xs={1} md={3} className="g-4">
+                  {fatture.filter((f) => {
+                    const cliente = clienti.find((c) => c.id?.toString() === f.clienteId?.toString());
+                    return (
+                      (cliente?.ragioneSociale?.toLowerCase() || "").includes(fattureSearch.toLowerCase()) ||
+                      (cliente?.partitaIva?.toLowerCase() || "").includes(fattureSearch.toLowerCase())
+                    );
+                  }).length === 0 ? (
+                    <Col>
+                      <div className="text-center text-muted">Nessuna fattura presente</div>
+                    </Col>
+                  ) : (
+                    fatture
+                      .filter((f) => {
+                        const cliente = clienti.find((c) => c.id?.toString() === f.clienteId?.toString());
+                        return (
+                          (cliente?.ragioneSociale?.toLowerCase() || "").includes(fattureSearch.toLowerCase()) ||
+                          (cliente?.partitaIva?.toLowerCase() || "").includes(fattureSearch.toLowerCase())
+                        );
+                      })
+                      .map((fattura, idx) => {
+                        const cliente = clienti.find((c) => c.id?.toString() === fattura.clienteId?.toString());
+                        return (
+                          <Col key={idx}>
+                            <Card className="h-100 text-center">
+                              <Card.Body>
+                                <Card.Title>Fattura n. {fattura.numero}</Card.Title>
+                                <div style={{ fontSize: 14 }}>
+                                  <div>
+                                    <strong>Cliente:</strong> {cliente?.ragioneSociale || "-"}
+                                  </div>
+                                  <div>
+                                    <strong>Partita IVA:</strong> {cliente?.partitaIva || "-"}
+                                  </div>
+                                  <div>
+                                    <strong>Data:</strong> {fattura.data}
+                                  </div>
+                                  <div>
+                                    <strong>Importo:</strong> {fattura.importo}
+                                  </div>
+                                </div>
+                              </Card.Body>
+                            </Card>
+                          </Col>
+                        );
+                      })
+                  )}
+                </Row>
+              </>
+            ) : user && user.role === "ADMIN" ? (
               <p>
                 Sei autenticato come <strong>ADMIN</strong>. Hai accesso alle funzionalità di amministrazione.
               </p>
