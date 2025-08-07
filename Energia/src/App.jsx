@@ -15,9 +15,9 @@ function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="*" element={<Navigate to="/register" />} />
         </Routes>
-        <div className="text-center mt-3">
+        {/*  <div className="text-center mt-3">
           <Link to="/login">Hai già un account? Accedi</Link>
-        </div>
+        </div> */}
       </Router>
     </AuthProvider>
   );
