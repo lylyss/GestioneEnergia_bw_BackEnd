@@ -4,6 +4,7 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import imageRegister from "../assets/imagePage.svg";
 import { Col, Row } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
 function RegisterPage() {
   const [form, setForm] = useState({
@@ -61,6 +62,9 @@ function RegisterPage() {
           </Form>
           {success && <div className="mt-3 text-success">Registrazione avvenuta con successo!</div>}
           {error && <div className="mt-3 text-danger">{error}</div>}
+          <div className="mt-3 text-center">
+            <Link to="/login">Hai già un account? Accedi</Link>
+          </div>
         </Col>
       </Row>
     </Container>

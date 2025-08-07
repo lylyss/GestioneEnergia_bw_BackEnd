@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import { AuthProvider } from "./AuthContext";
@@ -15,9 +15,6 @@ function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="*" element={<Navigate to="/register" />} />
         </Routes>
-        {/*  <div className="text-center mt-3">
-          <Link to="/login">Hai già un account? Accedi</Link>
-        </div> */}
       </Router>
     </AuthProvider>
   );
