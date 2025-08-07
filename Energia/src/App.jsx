@@ -1,36 +1,25 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import Navbar from "react-bootstrap/Navbar";
-import Nav from "react-bootstrap/Nav";
-import Container from "react-bootstrap/Container";
-import HomePage from "./pages/HomePage";
-import ClientiPage from "./pages/ClientiPage";
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
+import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage";
+import { AuthProvider } from "./AuthContext";
 import "./App.css";
+// import HomePage from "./pages/HomePage"; // Da mostrare dopo login
 
 function App() {
   return (
-    <BrowserRouter>
-      <Navbar bg="dark" variant="dark" expand="lg">
-        <Container>
-          <Navbar.Brand as={Link} to="/">
-            EPIC ENERGY CRM
-          </Navbar.Brand>
-          <Nav className="me-auto">
-            <Nav.Link as={Link} to="/">
-              Home
-            </Nav.Link>
-            <Nav.Link as={Link} to="/clienti">
-              Clienti
-            </Nav.Link>
-          </Nav>
-        </Container>
-      </Navbar>
-      <Container className="py-4">
+    <AuthProvider>
+      <Router>
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/clienti" element={<ClientiPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          {/* <Route path="/home" element={<HomePage />} /> */}
+          <Route path="*" element={<Navigate to="/register" />} />
         </Routes>
-      </Container>
-    </BrowserRouter>
+        <div className="text-center mt-3">
+          <Link to="/login">Hai già un account? Accedi</Link>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
