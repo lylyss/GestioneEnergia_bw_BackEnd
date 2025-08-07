@@ -4,6 +4,7 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+import imageRegister from "../assets/imagePage.svg";
 
 function LoginPage() {
   const [form, setForm] = useState({
@@ -37,6 +38,7 @@ function LoginPage() {
 
   return (
     <Container className="py-4" style={{ maxWidth: 400 }}>
+      <img src={imageRegister} alt="EPIC ENERGY SERVICES Logo" style={{ maxWidth: 110, marginBottom: 16 }} />
       <h2>Login</h2>
       <Form onSubmit={handleSubmit}>
         <Form.Group className="mb-3">

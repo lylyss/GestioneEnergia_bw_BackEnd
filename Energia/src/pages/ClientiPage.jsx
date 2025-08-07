@@ -4,6 +4,7 @@ import Table from "react-bootstrap/Table";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
+import imagePage from "../assets/imagePage.svg";
 
 function ClientiPage() {
   // Carica i clienti dal localStorage all'avvio
@@ -167,6 +168,7 @@ function ClientiPage() {
 
   return (
     <Container className="py-4">
+      <img src={imagePage} alt="EPIC ENERGY SERVICES Logo" style={{ maxWidth: 180, marginBottom: 16 }} />
       <h1>Gestione Clienti</h1>
       <Form className="mb-4" onSubmit={gestisciInvio}>
         <h4>{indiceModifica !== null ? "Modifica cliente" : "Aggiungi nuovo cliente"}</h4>
