@@ -142,6 +142,29 @@ function ClientiPage() {
     setClienteSelezionato(null);
   };
 
+  // Funzioni asincrone per integrazione API REST (da collegare agli endpoint backend)
+  async function caricaClientiDaApi() {
+    // const response = await fetch('/api/clienti');
+    // const data = await response.json();
+    // setClienti(data);
+  }
+
+  async function aggiungiClienteApi(nuovoCliente) {
+    //  await fetch('/api/clienti', { method: 'POST', body: JSON.stringify(nuovoCliente), headers: { 'Content-Type': 'application/json' } });
+    // Dopo la chiamata, ricarica i clienti
+    // await caricaClientiDaApi();
+  }
+
+  async function modificaClienteApi(id, datiCliente) {
+    //  await fetch(`/api/clienti/${id}`, { method: 'PUT', body: JSON.stringify(datiCliente), headers: { 'Content-Type': 'application/json' } });
+    // await caricaClientiDaApi();
+  }
+
+  async function eliminaClienteApi(id) {
+    //  await fetch(`/api/clienti/${id}`, { method: 'DELETE' });
+    // await caricaClientiDaApi();
+  }
+
   return (
     <Container className="py-4">
       <h1>Gestione Clienti</h1>

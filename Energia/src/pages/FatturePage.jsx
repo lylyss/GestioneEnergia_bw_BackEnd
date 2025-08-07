@@ -35,15 +35,17 @@ function FatturePage() {
     setFormFattura({ ...formFattura, [e.target.name]: e.target.value });
   };
 
-  const gestisciInvioFattura = (e) => {
+  const gestisciInvioFattura = async (e) => {
     e.preventDefault();
     if (indiceModificaFattura !== null) {
       // Modifica fattura esistente
+      // await modificaFatturaApi(fatture[indiceModificaFattura].id, formFattura); // decommenta quando hai l'id dal backend
       const nuoveFatture = fatture.map((fattura, indice) => (indice === indiceModificaFattura ? formFattura : fattura));
       setFatture(nuoveFatture);
       setIndiceModificaFattura(null);
     } else {
       // Aggiungi nuova fattura
+      // await aggiungiFatturaApi(formFattura); // decommenta per usare API
       setFatture([...fatture, formFattura]);
     }
     setFormFattura({ numero: "", data: "", importo: "", clienteId: clientiEsempio[0].id });
@@ -54,7 +56,8 @@ function FatturePage() {
     setIndiceModificaFattura(indiceFattura);
   };
 
-  const eliminaFattura = (indiceFattura) => {
+  const eliminaFattura = async (indiceFattura) => {
+    // await eliminaFatturaApi(fatture[indiceFattura].id); // decommenta per usare API
     setFatture(fatture.filter((_, indiceCorrente) => indiceCorrente !== indiceFattura));
   };
 
@@ -141,6 +144,40 @@ function FatturePage() {
     win.print();
     win.close();
   };
+
+  // Funzioni asincrone per integrazione API REST (da collegare agli endpoint backend)
+  async function caricaFattureDaApi() {
+    //  const response = await fetch('/api/fatture');
+    // const data = await response.json();
+    // setFatture(data);
+  }
+
+  async function aggiungiFatturaApi(nuovaFattura) {
+    //  await fetch('/api/fatture', { method: 'POST', body: JSON.stringify(nuovaFattura), headers: { 'Content-Type': 'application/json' } });
+    // Dopo la chiamata, ricarica le fatture
+    // await caricaFattureDaApi();
+  }
+
+  async function modificaFatturaApi(id, datiFattura) {
+    // await fetch(`/api/fatture/${id}`, { method: 'PUT', body: JSON.stringify(datiFattura), headers: { 'Content-Type': 'application/json' } });
+    // await caricaFattureDaApi();
+  }
+
+  async function eliminaFatturaApi(id) {
+    //  await fetch(`/api/fatture/${id}`, { method: 'DELETE' });
+    // await caricaFattureDaApi();
+  }
+
+  // Funzione asincrona per caricare i clienti da API (da collegare al backend)
+  async function caricaClientiDaApi() {
+    //  const response = await fetch('/api/clienti');
+    // const data = await response.json();
+    // setClientiEsempio(data);
+  }
+
+  // clienti reali dal backend,:
+  // const [clientiEsempio, setClientiEsempio] = useState([]);
+  // useEffect(() => { caricaClientiDaApi(); }, []);
 
   return (
     <Container className="py-4">
