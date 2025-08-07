@@ -2,7 +2,8 @@ import { useState } from "react";
 import Container from "react-bootstrap/Container";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../AuthContext";
 
 function LoginPage() {
   const [form, setForm] = useState({
@@ -10,6 +11,8 @@ function LoginPage() {
     password: "",
   });
   const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,15 +23,16 @@ function LoginPage() {
     setError("");
     // chiamata API di login
     // try {
-    //   await fetch("/api/auth/login", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify(form),
-    //   });
-    //   // gestisci login
+    //   const res = await fetch("/api/auth/login", { ... });
+    //   const userData = await res.json();
+    //   login(userData);
+    //   navigate("/home");
     // } catch (err) {
     //   setError("Credenziali non valide");
     // }
+    //login fittizio
+    login({ email: form.email, username: "DemoUser", role: "USER" });
+    navigate("/home");
   };
 
   return (

@@ -3,8 +3,8 @@ import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import { AuthProvider } from "./AuthContext";
 import "./App.css";
-// import HomePage from "./pages/HomePage"; // Da mostrare dopo login
-
+import HomePage from "./pages/HomePage";
+import "bootstrap/dist/css/bootstrap.min.css";
 function App() {
   return (
     <AuthProvider>
@@ -12,7 +12,7 @@ function App() {
         <Routes>
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
-          {/* <Route path="/home" element={<HomePage />} /> */}
+          <Route path="/home" element={<HomePage />} />
           <Route path="*" element={<Navigate to="/register" />} />
         </Routes>
         <div className="text-center mt-3">
