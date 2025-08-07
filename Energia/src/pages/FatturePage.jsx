@@ -19,6 +19,8 @@ function FatturePage() {
     importo: "",
     clienteId: clientiEsempio[0].id,
   });
+  const [indiceModificaFattura, setIndiceModificaFattura] = useState(null);
+  const [filtro, setFiltro] = useState("");
 
   const gestisciCambioFattura = (e) => {
     setFormFattura({ ...formFattura, [e.target.name]: e.target.value });
@@ -26,14 +28,37 @@ function FatturePage() {
 
   const gestisciInvioFattura = (e) => {
     e.preventDefault();
-    setFatture([...fatture, formFattura]);
-    setFormFattura({
-      numero: "",
-      data: "",
-      importo: "",
-      clienteId: clientiEsempio[0].id,
-    });
+    if (indiceModificaFattura !== null) {
+      // Modifica fattura esistente
+      const nuoveFatture = fatture.map((fattura, indice) => (indice === indiceModificaFattura ? formFattura : fattura));
+      setFatture(nuoveFatture);
+      setIndiceModificaFattura(null);
+    } else {
+      // Aggiungi nuova fattura
+      setFatture([...fatture, formFattura]);
+    }
+    setFormFattura({ numero: "", data: "", importo: "", clienteId: clientiEsempio[0].id });
   };
+
+  const modificaFattura = (indiceFattura) => {
+    setFormFattura(fatture[indiceFattura]);
+    setIndiceModificaFattura(indiceFattura);
+  };
+
+  const eliminaFattura = (indiceFattura) => {
+    setFatture(fatture.filter((_, indiceCorrente) => indiceCorrente !== indiceFattura));
+  };
+
+  // Filtra le fatture in base al testo inserito (cliente, numero, data, importo)
+  const fattureFiltrate = fatture.filter((fattura) => {
+    const cliente = clientiEsempio.find((c) => c.id.toString() === fattura.clienteId.toString());
+    return (
+      (cliente && cliente.ragioneSociale.toLowerCase().includes(filtro.toLowerCase())) ||
+      fattura.numero.toLowerCase().includes(filtro.toLowerCase()) ||
+      fattura.data.includes(filtro) ||
+      fattura.importo.toString().includes(filtro)
+    );
+  });
 
   return (
     <Container className="py-4">
@@ -60,10 +85,25 @@ function FatturePage() {
           <Form.Control type="number" placeholder="Importo" name="importo" value={formFattura.importo} onChange={gestisciCambioFattura} required />
         </Form.Group>
         <Button variant="primary" type="submit">
-          Aggiungi
+          {indiceModificaFattura !== null ? "Salva Modifiche" : "Aggiungi"}
         </Button>
+        {indiceModificaFattura !== null && (
+          <Button
+            variant="secondary"
+            className="ms-2"
+            onClick={() => {
+              setIndiceModificaFattura(null);
+              setFormFattura({ numero: "", data: "", importo: "", clienteId: clientiEsempio[0].id });
+            }}
+          >
+            Annulla
+          </Button>
+        )}
       </Form>
       <h4>Elenco Fatture</h4>
+      <Form.Group className="mb-3">
+        <Form.Control type="text" placeholder="Cerca per Cliente, Numero, Data o Importo" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
+      </Form.Group>
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -71,24 +111,33 @@ function FatturePage() {
             <th>Numero</th>
             <th>Data</th>
             <th>Importo</th>
+            <th>Azioni</th>
           </tr>
         </thead>
         <tbody>
-          {fatture.length === 0 ? (
+          {fattureFiltrate.length === 0 ? (
             <tr>
-              <td colSpan="4" className="text-center">
-                Nessuna fattura inserita
+              <td colSpan="5" className="text-center">
+                Nessuna fattura trovata
               </td>
             </tr>
           ) : (
-            fatture.map((fattura, indice) => {
+            fattureFiltrate.map((fattura, indiceFattura) => {
               const cliente = clientiEsempio.find((c) => c.id.toString() === fattura.clienteId.toString());
               return (
-                <tr key={indice}>
+                <tr key={indiceFattura}>
                   <td>{cliente ? cliente.ragioneSociale : "-"}</td>
                   <td>{fattura.numero}</td>
                   <td>{fattura.data}</td>
                   <td>{fattura.importo}</td>
+                  <td>
+                    <Button variant="warning" size="sm" className="me-2" onClick={() => modificaFattura(indiceFattura)}>
+                      Modifica
+                    </Button>
+                    <Button variant="danger" size="sm" onClick={() => eliminaFattura(indiceFattura)}>
+                      Elimina
+                    </Button>
+                  </td>
                 </tr>
               );
             })
