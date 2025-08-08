@@ -7,6 +7,7 @@ import Card from "react-bootstrap/Card";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
 
 function HomePage() {
   const { user } = useAuth();
@@ -15,6 +16,7 @@ function HomePage() {
   const [search, setSearch] = useState("");
   const [showFattureList, setShowFattureList] = useState(false);
   const [fattureSearch, setFattureSearch] = useState("");
+  const [showAddCliente, setShowAddCliente] = useState(false);
   const clienti = JSON.parse(localStorage.getItem("clienti") || "[]");
   const fatture = JSON.parse(localStorage.getItem("fatture") || "[]");
   const clientiMenuRef = useRef();
@@ -90,6 +92,7 @@ function HomePage() {
                       onClick={() => {
                         setShowClientiList(true);
                         setShowFattureList(false);
+                        setShowAddCliente(false);
                         setOpenClienti(false);
                       }}
                     >
@@ -109,10 +112,31 @@ function HomePage() {
                       onClick={() => {
                         setShowFattureList(true);
                         setShowClientiList(false);
+                        setShowAddCliente(false);
                         setOpenClienti(false);
                       }}
                     >
                       Lista Fatture
+                    </span>
+                  </li>
+                  <li>
+                    <span
+                      style={{
+                        display: "block",
+                        padding: "8px 16px",
+                        color: "#333",
+                        textDecoration: "none",
+                        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.25)",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        setShowAddCliente(true);
+                        setShowClientiList(false);
+                        setShowFattureList(false);
+                        setOpenClienti(false);
+                      }}
+                    >
+                      Aggiungi clienti
                     </span>
                   </li>
                 </ul>
@@ -130,7 +154,102 @@ function HomePage() {
           </header>
           {/* Main */}
           <main className="flex-grow-1">
-            {showClientiList ? (
+            {showAddCliente ? (
+              <>
+                <h4 className="mb-3">Aggiungi nuovo cliente</h4>
+                <Form
+                  style={{ maxWidth: 500 }}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    const nuovoCliente = {
+                      ragioneSociale: formData.get("ragioneSociale"),
+                      partitaIva: formData.get("partitaIva"),
+                      email: formData.get("email"),
+                      dataInserimento: formData.get("dataInserimento"),
+                      dataUltimoContatto: formData.get("dataUltimoContatto"),
+                      fatturatoAnnuale: formData.get("fatturatoAnnuale"),
+                      pec: formData.get("pec"),
+                      telefono: formData.get("telefono"),
+                      emailContatto: formData.get("emailContatto"),
+                      nomeContatto: formData.get("nomeContatto"),
+                      cognomeContatto: formData.get("cognomeContatto"),
+                      telefonoContatto: formData.get("telefonoContatto"),
+                      logoAziendale: formData.get("logoAziendale"),
+                      sede: {
+                        indirizzo: formData.get("indirizzo"),
+                        comune: formData.get("comune"),
+                        provincia: formData.get("provincia"),
+                        tipoSede: formData.get("tipoSede"),
+                      },
+                    };
+                    const clientiSalvati = JSON.parse(localStorage.getItem("clienti") || "[]");
+                    localStorage.setItem("clienti", JSON.stringify([...clientiSalvati, nuovoCliente]));
+                    e.target.reset();
+                    alert("Cliente aggiunto!");
+                  }}
+                >
+                  <Form.Group className="mb-2">
+                    <Form.Control type="text" name="ragioneSociale" placeholder="Ragione Sociale" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="text" name="partitaIva" placeholder="Partita IVA" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="email" name="email" placeholder="Email" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Label>Data Inserimento</Form.Label>
+                    <Form.Control type="date" name="dataInserimento" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Label>Data Ultimo Contatto</Form.Label>
+                    <Form.Control type="date" name="dataUltimoContatto" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="number" name="fatturatoAnnuale" placeholder="Fatturato Annuale" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="email" name="pec" placeholder="PEC" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="tel" name="telefono" placeholder="Telefono" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="email" name="emailContatto" placeholder="Email Contatto" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="text" name="nomeContatto" placeholder="Nome Contatto" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="text" name="cognomeContatto" placeholder="Cognome Contatto" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="tel" name="telefonoContatto" placeholder="Telefono Contatto" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="text" name="logoAziendale" placeholder="Logo Aziendale (URL)" />
+                  </Form.Group>
+                  <hr />
+                  <h5 className="mb-2">Sede</h5>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="text" name="indirizzo" placeholder="Indirizzo" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="text" name="comune" placeholder="Comune" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="text" name="provincia" placeholder="Provincia" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="text" name="tipoSede" placeholder="Tipo Sede (es. Legale, Operativa)" required />
+                  </Form.Group>
+                  <Button type="submit" variant="primary">
+                    Aggiungi
+                  </Button>
+                </Form>
+              </>
+            ) : showClientiList ? (
               <>
                 <Form className="mb-4" style={{ maxWidth: 400 }}>
                   <Form.Control
