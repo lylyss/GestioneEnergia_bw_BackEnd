@@ -17,7 +17,7 @@ function HomePage() {
   const [showFattureList, setShowFattureList] = useState(false);
   const [fattureSearch, setFattureSearch] = useState("");
   const [showAddCliente, setShowAddCliente] = useState(false);
-  const clienti = JSON.parse(localStorage.getItem("clienti") || "[]");
+  const [clienti, setClienti] = useState([]);
   const fatture = JSON.parse(localStorage.getItem("fatture") || "[]");
   const clientiMenuRef = useRef();
 
@@ -30,6 +30,28 @@ function HomePage() {
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    async function fetchClienti() {
+      const token = String(localStorage.getItem("accesstoken") || "");
+      if (!token) return;
+      try {
+        const res = await fetch("http://localhost:3001/clienti", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          console.log("Clienti fetched:", data);
+          setClienti(data);
+        }
+      } catch (err) {
+        // gestisci errore
+      }
+    }
+    fetchClienti();
   }, []);
 
   return (

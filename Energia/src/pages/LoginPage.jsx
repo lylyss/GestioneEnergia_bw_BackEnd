@@ -22,18 +22,32 @@ function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    // chiamata API di login
-    // try {
-    //   const res = await fetch("/api/auth/login", { ... });
-    //   const userData = await res.json();
-    //   login(userData);
-    //   navigate("/home");
-    // } catch (err) {
-    //   setError("Credenziali non valide");
-    // }
-    //login fittizio
-    login({ email: form.email, username: "DemoUser", role: "USER" });
-    navigate("/home");
+    // login solo con email e password
+    const payload = { email: form.email, password: form.password };
+    try {
+      const res = await fetch("http://localhost:3001/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Login response:", data); // <-- aggiunto log
+        if (data.accessToken) {
+          localStorage.setItem("token", data.accessToken);
+          login(data.user);
+          navigate("/home");
+        } else {
+          setError(data.message || "Credenziali non valide");
+        }
+      } else {
+        const data = await res.json();
+        console.log("Login error response:", data); // <-- aggiunto log
+        setError(data.message || "Credenziali non valide");
+      }
+    } catch (err) {
+      setError("Errore di connessione");
+    }
   };
 
   return (
@@ -43,7 +57,7 @@ function LoginPage() {
       <Form onSubmit={handleSubmit}>
         <Form.Group className="mb-3">
           <Form.Label>Email</Form.Label>
-          <Form.Control type="email" name="email" value={form.email} onChange={handleChange} required />
+          <Form.Control type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" required />
         </Form.Group>
         <Form.Group className="mb-3">
           <Form.Label>Password</Form.Label>

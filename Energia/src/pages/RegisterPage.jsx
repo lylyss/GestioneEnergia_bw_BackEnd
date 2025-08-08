@@ -11,6 +11,9 @@ function RegisterPage() {
     username: "",
     email: "",
     password: "",
+    nome: "",
+    cognome: "",
+    avatarUrl: "",
   });
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -23,18 +26,26 @@ function RegisterPage() {
     e.preventDefault();
     setError("");
     setSuccess(false);
-    // chiamata API di registrazione
-    // try {
-    //   await fetch("/api/auth/register", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify(form),
-    //   });
-    //   setSuccess(true);
-    // } catch (err) {
-    //   setError("Errore nella registrazione");
-    // }
-    setSuccess(true); // Solo demo
+    // Validazione base lato client
+    if (!form.username || !form.email || !form.password || !form.nome || !form.cognome) {
+      setError("Compila tutti i campi obbligatori.");
+      return;
+    }
+    try {
+      const res = await fetch("http://localhost:3001/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setSuccess(true);
+      } else {
+        const data = await res.json();
+        setError(data.message || "Errore nella registrazione");
+      }
+    } catch (err) {
+      setError("Errore di connessione");
+    }
   };
 
   return (
@@ -55,6 +66,18 @@ function RegisterPage() {
             <Form.Group className="mb-3">
               <Form.Label>Password</Form.Label>
               <Form.Control type="password" name="password" value={form.password} onChange={handleChange} required />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Nome</Form.Label>
+              <Form.Control name="nome" value={form.nome} onChange={handleChange} required />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Cognome</Form.Label>
+              <Form.Control name="cognome" value={form.cognome} onChange={handleChange} required />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Avatar URL</Form.Label>
+              <Form.Control name="avatarUrl" value={form.avatarUrl} onChange={handleChange} />
             </Form.Group>
             <Button type="submit" variant="primary">
               Registrati
