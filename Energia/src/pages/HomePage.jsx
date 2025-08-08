@@ -17,8 +17,16 @@ function HomePage() {
   const [showFattureList, setShowFattureList] = useState(false);
   const [fattureSearch, setFattureSearch] = useState("");
   const [showAddCliente, setShowAddCliente] = useState(false);
+  const [showAddFattura, setShowAddFattura] = useState(false);
   const [clienti, setClienti] = useState([]);
-  const fatture = JSON.parse(localStorage.getItem("fatture") || "[]");
+  const [fatture, setFatture] = useState([]);
+  const [selectedCliente, setSelectedCliente] = useState(null);
+  const [selectedFattura, setSelectedFattura] = useState(null);
+  const [editFattura, setEditFattura] = useState(null);
+  const [comuni, setComuni] = useState([]);
+  const [province, setProvince] = useState([]);
+  const [ordineAsc, setOrdineAsc] = useState(true);
+  const [letteraFiltro, setLetteraFiltro] = useState("");
   const clientiMenuRef = useRef();
 
   // Chiudi il menu a discesa quando clicchi fuori
@@ -34,25 +42,111 @@ function HomePage() {
 
   useEffect(() => {
     async function fetchClienti() {
-      const token = String(localStorage.getItem("accesstoken") || "");
+      const token = String(localStorage.getItem("token") || "");
       if (!token) return;
       try {
         const res = await fetch("http://localhost:3001/clienti", {
+          method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
         });
         if (res.ok) {
-          const data = await res.json();
+          let data;
+          try {
+            data = await res.json();
+          } catch (jsonErr) {
+            console.error("Risposta non JSON dalla fetch clienti:", jsonErr);
+            setClienti([]);
+            return;
+          }
           console.log("Clienti fetched:", data);
-          setClienti(data);
+          // Gestione struttura { content: [...] }
+          if (Array.isArray(data)) {
+            setClienti(data);
+          } else if (data && Array.isArray(data.content)) {
+            setClienti(data.content);
+          } else {
+            console.warn("Nessun cliente trovato o risposta non valida", data);
+            setClienti([]);
+          }
+        } else {
+          console.error("Errore nella fetch clienti:", res.status, await res.text());
         }
       } catch (err) {
-        // gestisci errore
+        console.error("Errore di rete/fetch clienti:", err);
       }
     }
+    async function fetchFatture() {
+      const token = String(localStorage.getItem("token") || "");
+      if (!token) return;
+      try {
+        const res = await fetch("http://localhost:3001/fatture", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (res.ok) {
+          let data;
+          try {
+            data = await res.json();
+          } catch (jsonErr) {
+            console.error("Risposta non JSON dalla fetch fatture:", jsonErr);
+            setFatture([]);
+            return;
+          }
+          console.log("Fatture fetched:", data);
+          // Gestione struttura { content: [...] }
+          if (Array.isArray(data)) {
+            setFatture(data);
+          } else if (data && Array.isArray(data.content)) {
+            setFatture(data.content);
+          } else {
+            console.warn("Nessuna fattura trovata o risposta non valida", data);
+            setFatture([]);
+          }
+        } else {
+          console.error("Errore nella fetch fatture:", res.status, await res.text());
+        }
+      } catch (err) {
+        console.error("Errore di rete/fetch fatture:", err);
+      }
+    }
+    async function fetchComuni() {
+      try {
+        const res = await fetch("http://localhost:3001/comuni");
+        if (res.ok) {
+          const data = await res.json();
+          setComuni(Array.isArray(data) ? data : data.content || []);
+        }
+      } catch {}
+    }
+    async function fetchProvince() {
+      try {
+        const res = await fetch("http://localhost:3001/province");
+        if (res.ok) {
+          const data = await res.json();
+          setProvince(Array.isArray(data) ? data : data.content || []);
+        }
+      } catch {}
+    }
     fetchClienti();
+    fetchFatture();
+    fetchComuni();
+    fetchProvince();
   }, []);
+
+  // Funzione per ordinare i clienti per ragione sociale
+  const clientiOrdinati = [...clienti].sort((a, b) => {
+    const nomeA = a.ragioneSociale?.toLowerCase() || "";
+    const nomeB = b.ragioneSociale?.toLowerCase() || "";
+    if (nomeA < nomeB) return ordineAsc ? -1 : 1;
+    if (nomeA > nomeB) return ordineAsc ? 1 : -1;
+    return 0;
+  });
 
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
@@ -161,6 +255,27 @@ function HomePage() {
                       Aggiungi clienti
                     </span>
                   </li>
+                  <li>
+                    <span
+                      style={{
+                        display: "block",
+                        padding: "8px 16px",
+                        color: "#333",
+                        textDecoration: "none",
+                        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.25)",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        setShowAddFattura(true);
+                        setShowClientiList(false);
+                        setShowFattureList(false);
+                        setShowAddCliente(false);
+                        setOpenClienti(false);
+                      }}
+                    >
+                      Aggiungi fattura
+                    </span>
+                  </li>
                 </ul>
               )}
             </li>
@@ -176,7 +291,107 @@ function HomePage() {
           </header>
           {/* Main */}
           <main className="flex-grow-1">
-            {showAddCliente ? (
+            {showAddFattura ? (
+              <>
+                <h4 className="mb-3">Aggiungi nuova fattura</h4>
+                <Form
+                  style={{ maxWidth: 500 }}
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    const nuovaFattura = {
+                      numero: formData.get("numero"),
+                      data: formData.get("data"),
+                      importo: formData.get("importo"),
+                      clienteId: formData.get("clienteId"),
+                    };
+                    const statoFattura = formData.get("statoFattura");
+                    const token = String(localStorage.getItem("token") || "");
+                    try {
+                      const res = await fetch("http://localhost:3001/fatture", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify(nuovaFattura),
+                      });
+                      if (res.ok) {
+                        const fatturaCreata = await res.json();
+                        // Salva lo stato della fattura
+                        await fetch("http://localhost:3001/statofatture/salvastatofattura", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                          },
+                          body: JSON.stringify({
+                            stato: statoFattura,
+                            fatturaId: fatturaCreata.id || fatturaCreata.fatturaId || fatturaCreata.idFattura,
+                          }),
+                        });
+                        alert("Fattura aggiunta!");
+                        e.target.reset();
+                        setShowAddFattura(false);
+                        // Aggiorna la lista fatture
+                        const fattureRes = await fetch("http://localhost:3001/fatture", {
+                          method: "GET",
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                          },
+                        });
+                        if (fattureRes.ok) {
+                          let data = await fattureRes.json();
+                          setFatture(Array.isArray(data) ? data : data.content || []);
+                        }
+                      } else {
+                        alert("Errore nell'aggiunta della fattura");
+                      }
+                    } catch (err) {
+                      alert("Errore di rete");
+                    }
+                  }}
+                >
+                  <Form.Group className="mb-2">
+                    <Form.Control type="text" name="numero" placeholder="Numero fattura" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Label>Data</Form.Label>
+                    <Form.Control type="date" name="data" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Control type="number" name="importo" placeholder="Importo" required />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Label>Cliente</Form.Label>
+                    <Form.Select name="clienteId" required>
+                      <option value="">Seleziona cliente...</option>
+                      {clienti.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.ragioneSociale}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Label>Stato Fattura</Form.Label>
+                    <Form.Select name="statoFattura" required>
+                      <option value="">Seleziona stato...</option>
+                      <option value="PAGATA">PAGATA</option>
+                      <option value="NON PAGATA">NON PAGATA</option>
+                      <option value="IN ATTESA">IN ATTESA</option>
+                    </Form.Select>
+                  </Form.Group>
+                  <Button type="submit" variant="primary">
+                    Aggiungi fattura
+                  </Button>
+                  <Button className="ms-2" variant="secondary" onClick={() => setShowAddFattura(false)}>
+                    Annulla
+                  </Button>
+                </Form>
+              </>
+            ) : showAddCliente ? (
               <>
                 <h4 className="mb-3">Aggiungi nuovo cliente</h4>
                 <Form
@@ -258,10 +473,26 @@ function HomePage() {
                     <Form.Control type="text" name="indirizzo" placeholder="Indirizzo" required />
                   </Form.Group>
                   <Form.Group className="mb-2">
-                    <Form.Control type="text" name="comune" placeholder="Comune" required />
+                    <Form.Label>Comune</Form.Label>
+                    <Form.Select name="comune" required>
+                      <option value="">Seleziona comune...</option>
+                      {comuni.map((c) => (
+                        <option key={c.id || c.nome} value={c.nome || c}>
+                          {c.nome || c}
+                        </option>
+                      ))}
+                    </Form.Select>
                   </Form.Group>
                   <Form.Group className="mb-2">
-                    <Form.Control type="text" name="provincia" placeholder="Provincia" required />
+                    <Form.Label>Provincia</Form.Label>
+                    <Form.Select name="provincia" required>
+                      <option value="">Seleziona provincia...</option>
+                      {province.map((p) => (
+                        <option key={p.id || p.nome} value={p.nome || p}>
+                          {p.nome || p}
+                        </option>
+                      ))}
+                    </Form.Select>
                   </Form.Group>
                   <Form.Group className="mb-2">
                     <Form.Control type="text" name="tipoSede" placeholder="Tipo Sede (es. Legale, Operativa)" required />
@@ -281,28 +512,44 @@ function HomePage() {
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </Form>
+                <Form className="mb-3" style={{ maxWidth: 120 }}>
+                  <Form.Control
+                    type="text"
+                    maxLength={1}
+                    placeholder="Lettera..."
+                    value={letteraFiltro}
+                    onChange={(e) => setLetteraFiltro(e.target.value.toUpperCase())}
+                  />
+                </Form>
+                <Button className="mb-3" variant="outline-primary" onClick={() => setOrdineAsc((v) => !v)}>
+                  Ordina per Ragione Sociale {ordineAsc ? "(A-Z)" : "(Z-A)"}
+                </Button>
                 <Row xs={1} md={3} className="g-4">
                   {/* Mostra i clienti filtrati */}
-                  {clienti.filter(
-                    (c) =>
+                  {clientiOrdinati.filter((c) => {
+                    const matchSearch =
                       c.ragioneSociale.toLowerCase().includes(search.toLowerCase()) ||
                       c.partitaIva.toLowerCase().includes(search.toLowerCase()) ||
-                      c.email.toLowerCase().includes(search.toLowerCase())
-                  ).length === 0 ? (
+                      c.email.toLowerCase().includes(search.toLowerCase());
+                    const matchLettera = !letteraFiltro || (c.ragioneSociale && c.ragioneSociale[0].toUpperCase() === letteraFiltro);
+                    return matchSearch && matchLettera;
+                  }).length === 0 ? (
                     <Col>
                       <div className="text-center text-muted">Nessun cliente presente</div>
                     </Col>
                   ) : (
-                    clienti
-                      .filter(
-                        (c) =>
+                    clientiOrdinati
+                      .filter((c) => {
+                        const matchSearch =
                           c.ragioneSociale.toLowerCase().includes(search.toLowerCase()) ||
                           c.partitaIva.toLowerCase().includes(search.toLowerCase()) ||
-                          c.email.toLowerCase().includes(search.toLowerCase())
-                      )
+                          c.email.toLowerCase().includes(search.toLowerCase());
+                        const matchLettera = !letteraFiltro || (c.ragioneSociale && c.ragioneSociale[0].toUpperCase() === letteraFiltro);
+                        return matchSearch && matchLettera;
+                      })
                       .map((cliente, idx) => (
                         <Col key={idx}>
-                          <Card className="h-100 text-center">
+                          <Card className="h-100 text-center" style={{ cursor: "pointer" }} onClick={() => setSelectedCliente(cliente)}>
                             <Card.Img variant="top" src={imagePage} style={{ maxWidth: 60, margin: "0 auto", marginTop: 16 }} />
                             <Card.Body>
                               <Card.Title>{cliente.ragioneSociale}</Card.Title>
@@ -312,6 +559,46 @@ function HomePage() {
                       ))
                   )}
                 </Row>
+                {selectedCliente && (
+                  <div className="mt-4 p-3 border rounded bg-light">
+                    <h5>Dettagli Cliente</h5>
+                    <div>
+                      <strong>Ragione Sociale:</strong> {selectedCliente.ragioneSociale}
+                    </div>
+                    <div>
+                      <strong>Partita IVA:</strong> {selectedCliente.partitaIva}
+                    </div>
+                    <div>
+                      <strong>Email:</strong> {selectedCliente.email}
+                    </div>
+                    <div>
+                      <strong>PEC:</strong> {selectedCliente.pec}
+                    </div>
+                    <div>
+                      <strong>Telefono:</strong> {selectedCliente.telefono}
+                    </div>
+                    <div>
+                      <strong>Fatturato Annuale:</strong> {selectedCliente.fatturatoAnnuale}
+                    </div>
+                    <div>
+                      <strong>Data Inserimento:</strong> {selectedCliente.dataInserimento}
+                    </div>
+                    <div>
+                      <strong>Data Ultimo Contatto:</strong> {selectedCliente.dataUltimoContatto}
+                    </div>
+                    <div>
+                      <strong>Contatto:</strong> {selectedCliente.nomeContatto} {selectedCliente.cognomeContatto} ({selectedCliente.emailContatto},{" "}
+                      {selectedCliente.telefonoContatto})
+                    </div>
+                    <div>
+                      <strong>Logo Aziendale:</strong> {selectedCliente.logoAziendale}
+                    </div>
+
+                    <Button className="mt-2" variant="secondary" onClick={() => setSelectedCliente(null)}>
+                      Chiudi
+                    </Button>
+                  </div>
+                )}
               </>
             ) : showFattureList ? (
               <>
@@ -347,7 +634,7 @@ function HomePage() {
                         const cliente = clienti.find((c) => c.id?.toString() === fattura.clienteId?.toString());
                         return (
                           <Col key={idx}>
-                            <Card className="h-100 text-center">
+                            <Card className="h-100 text-center" style={{ cursor: "pointer" }} onClick={() => setSelectedFattura({ ...fattura, cliente })}>
                               <Card.Body>
                                 <Card.Title>Fattura n. {fattura.numero}</Card.Title>
                                 <div style={{ fontSize: 14 }}>
@@ -371,6 +658,113 @@ function HomePage() {
                       })
                   )}
                 </Row>
+                {selectedFattura && !editFattura && (
+                  <div className="mt-4 p-3 border rounded bg-light">
+                    <h5>Dettagli Fattura</h5>
+                    <div>
+                      <strong>Numero:</strong> {selectedFattura.numero}
+                    </div>
+                    <div>
+                      <strong>Data:</strong> {selectedFattura.data}
+                    </div>
+                    <div>
+                      <strong>Importo:</strong> {selectedFattura.importo}
+                    </div>
+                    <div>
+                      <strong>Cliente:</strong> {selectedFattura.cliente?.ragioneSociale}
+                    </div>
+                    <div>
+                      <strong>Partita IVA:</strong> {selectedFattura.cliente?.partitaIva}
+                    </div>
+                    <div>
+                      <strong>Email Cliente:</strong> {selectedFattura.cliente?.email}
+                    </div>
+                    <Button className="mt-2 me-2" variant="warning" onClick={() => setEditFattura(selectedFattura)}>
+                      Modifica
+                    </Button>
+                    <Button className="mt-2" variant="secondary" onClick={() => setSelectedFattura(null)}>
+                      Chiudi
+                    </Button>
+                  </div>
+                )}
+                {editFattura && (
+                  <div className="mt-4 p-3 border rounded bg-light">
+                    <h5>Modifica Fattura</h5>
+                    <Form
+                      style={{ maxWidth: 500 }}
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.target);
+                        const updatedFattura = {
+                          numero: formData.get("numero"),
+                          data: formData.get("data"),
+                          importo: formData.get("importo"),
+                          clienteId: formData.get("clienteId"),
+                        };
+                        const token = String(localStorage.getItem("token") || "");
+                        try {
+                          const res = await fetch(`http://localhost:3001/fatture/${editFattura.id || editFattura.fatturaId || editFattura.idFattura}`, {
+                            method: "PUT",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify(updatedFattura),
+                          });
+                          if (res.ok) {
+                            alert("Fattura aggiornata!");
+                            setEditFattura(null);
+                            setSelectedFattura(null);
+                            // Aggiorna la lista fatture
+                            const fattureRes = await fetch("http://localhost:3001/fatture", {
+                              method: "GET",
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                                "Content-Type": "application/json",
+                              },
+                            });
+                            if (fattureRes.ok) {
+                              let data = await fattureRes.json();
+                              setFatture(Array.isArray(data) ? data : data.content || []);
+                            }
+                          } else {
+                            alert("Errore nell'aggiornamento della fattura");
+                          }
+                        } catch {
+                          alert("Errore di rete");
+                        }
+                      }}
+                    >
+                      <Form.Group className="mb-2">
+                        <Form.Control type="text" name="numero" defaultValue={editFattura.numero} required />
+                      </Form.Group>
+                      <Form.Group className="mb-2">
+                        <Form.Label>Data</Form.Label>
+                        <Form.Control type="date" name="data" defaultValue={editFattura.data} required />
+                      </Form.Group>
+                      <Form.Group className="mb-2">
+                        <Form.Control type="number" name="importo" defaultValue={editFattura.importo} required />
+                      </Form.Group>
+                      <Form.Group className="mb-2">
+                        <Form.Label>Cliente</Form.Label>
+                        <Form.Select name="clienteId" defaultValue={editFattura.clienteId} required>
+                          <option value="">Seleziona cliente...</option>
+                          {clienti.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.ragioneSociale}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                      <Button type="submit" variant="primary">
+                        Salva modifiche
+                      </Button>
+                      <Button className="ms-2" variant="secondary" onClick={() => setEditFattura(null)}>
+                        Annulla
+                      </Button>
+                    </Form>
+                  </div>
+                )}
               </>
             ) : user && user.role === "ADMIN" ? (
               <p>
